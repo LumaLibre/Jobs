@@ -1314,6 +1314,10 @@ public final class JobsPaymentListener implements Listener {
         if (killer == null)
             return;
 
+        if (killer.getType() == EntityType.WOLF) {
+            return;// temp fix
+        }
+
         // mob spawner, no payment or experience
         if (!Jobs.getGCManager().payNearSpawner() && lVictim.hasMetadata(Jobs.getPlayerManager().getMobSpawnerMetadata())) {
             try {
