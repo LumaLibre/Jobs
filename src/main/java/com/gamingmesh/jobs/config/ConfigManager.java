@@ -32,6 +32,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 
@@ -104,7 +105,7 @@ public class ConfigManager {
 
         cfg.header(Arrays.asList("Jobs configuration.", "", "Edited by roracle to include 1.13 items and item names, prepping for 1.14 as well.",
             "",
-            "Stores information about each job.",
+            "Stores information about each job",
             "",
             "NOTE: When having multiple jobs, both jobs will give the income payout to the player",
             "even if they give the pay for one action (make the configurations with this in mind)",
@@ -410,7 +411,7 @@ public class ConfigManager {
         cfg.addComment(pt + ".Brew", "Brewing miscellaneous items");
         generate(cfg, pt + ".Brew.nether_stalk");
         generate(cfg, pt + ".Brew.redstone");
-        
+
         cfg.addComment(pt + ".Brush", "Brushing blocks and getting items from them");
         generate(cfg, pt + ".Brush.suspicious_sand");
         generate(cfg, pt + ".Brush.suspicious_gravel");
@@ -440,13 +441,10 @@ public class ConfigManager {
 
         cfg.addComment(pt + ".conditions", "Permissions granted when particular conditions are met");
         cfg.addComment(pt + ".conditions.first", "Condition name, irrelevant, you can write anything in here");
-
-        cfg.addComment(pt + ".conditions.first.requires", "j marks that player should have particular jobs level and higher", "p marks permission requirement");
-        cfg.get(pt + ".permissions.first.requires", Arrays.asList("j:Miner-50", "j:Digger-50"));
         cfg.addComment(pt + ".conditions.first.requires", "j marks that player should have particular jobs level and higher");
-        cfg.get(pt + ".permissions.first.requires", Arrays.asList("j:Miner-50", "j:Digger-50", "p:essentials.notnoob"));
+        cfg.get(pt + ".conditions.first.requires", Arrays.asList("j:Miner-50", "j:Digger-50", "p:essentials.notnoob"));
         cfg.addComment(pt + ".conditions.first.perform", "p marks permission, player will get if given true value, if used false, permission will be taken");
-        cfg.get(pt + ".permissions.first.perform", Arrays.asList("p:essentials.fly-true"));
+        cfg.get(pt + ".conditions.first.perform", Arrays.asList("p:essentials.fly-true"));
 
         cfg.addComment(pt + ".commands", "Commands executed when player reached level");
         cfg.addComment(pt + ".commands.fly", "command name, just to have better idea what this do");
@@ -813,10 +811,10 @@ public class ConfigManager {
 
             Jobs.getExploreManager().setExploreEnabled();
             Jobs.getExploreManager().setPlayerAmount(amount);
-            
+
             Jobs.getChunkExplorationManager().setExploreEnabled();
-	    Jobs.getChunkExplorationManager().setPlayerAmount(amount);
-	    
+            Jobs.getChunkExplorationManager().setPlayerAmount(amount);
+
         } else if (actionType == ActionType.CRAFT) {
             if (myKey.startsWith("!")) {
                 type = myKey.substring(1, myKey.length());
@@ -843,12 +841,12 @@ public class ConfigManager {
             meta = "ALL";
             // case for ":all" identifier
             type = (actionType == ActionType.SHEAR && myKey.startsWith("color")) ? "color" : CMIMaterial.getGeneralMaterialName(type);
-            
+
             CMIEntityType entity = CMIEntityType.get(type);
             if (entity != null) {
-		type = entity.toString();
-	    }
-            
+                type = entity.toString();
+            }
+
         }
 
         if (actionType == ActionType.TNTBREAK)

@@ -897,7 +897,7 @@ public final class Jobs extends JavaPlugin {
             getInstance().getBlockOwnerShip(CMIMaterial.SMOKER).ifPresent(BlockOwnerShip::load);
         }
 
-        ToggleBarHandling.load();
+        ToggleBarHandling.init();
         usedSlots.clear();
         for (Job job : jobs) {
             usedSlots.put(job, dao.getSlotsTaken(job));
@@ -936,8 +936,7 @@ public final class Jobs extends JavaPlugin {
         if (dao != null && Jobs.getGeneralConfigManager().ExploreSaveIntoDatabase)
             dao.saveExplore();
 
-        blockOwnerShipsMaterial.values().forEach(BlockOwnerShip::save);
-        ToggleBarHandling.save();
+        BlockOwnerShip.save(blockOwnerShipsMaterial);
 
         if (saveTask != null)
             saveTask.shutdown();
@@ -1048,9 +1047,8 @@ public final class Jobs extends JavaPlugin {
         List<JobProgression> progression = jPlayer.getJobProgression();
         int numjobs = progression.size();
 
-        if (!Jobs.getGCManager().useBlockProtectionBlockTracker && !Jobs.getExploitManager().isProtectionValidAddIfNotExists(jPlayer, info, block, true)) {
+        if (!Jobs.getGCManager().useBlockProtectionBlockTracker && !Jobs.getExploitManager().isProtectionValidAddIfNotExists(jPlayer, info, block, true))
             return;
-        }
 
         // no job
         if (numjobs == 0) {
