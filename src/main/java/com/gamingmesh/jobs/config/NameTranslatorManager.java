@@ -18,7 +18,7 @@ import com.gamingmesh.jobs.Jobs;
 import com.gamingmesh.jobs.container.ActionType;
 import com.gamingmesh.jobs.container.JobInfo;
 import com.gamingmesh.jobs.container.NameList;
-import com.gamingmesh.jobs.hooks.HookManager;
+import com.gamingmesh.jobs.hooks.JobsHook;
 import com.gamingmesh.jobs.stuff.Util;
 
 import net.Zrips.CMILib.Container.CMIText;
@@ -38,6 +38,14 @@ public class NameTranslatorManager {
 
     public String translate(String materialName, JobInfo info) {
         return translate(materialName, info.getActionType(), info.getId(), info.getMeta(), info.getName());
+    }
+
+    public String translate(CMIMaterial material) {
+        NameList nameList = listOfNames.get(material);
+        // Defaulting to CMILib name translation
+        if (nameList == null)
+            return material.getName();
+        return nameList.getName();
     }
 
     public String translate(String materialName, ActionType action, int id, String meta, String name) {
@@ -183,7 +191,7 @@ public class NameTranslatorManager {
                 if (got != null && got.getName() != null)
                     return got.getName();
 
-                return HookManager.getMythicManager() == null ? materialName : HookManager.getMythicManager().getDisplayName(materialName);
+                return !JobsHook.MythicMobs.isEnabled() ? materialName : JobsHook.getMythicMobsManager().getDisplayName(materialName);
             default:
                 break;
             }
@@ -453,7 +461,7 @@ public class NameTranslatorManager {
                     continue;
                 }
 
-                if (enchName.isEmpty()) {
+                if (enchName == null || enchName.isEmpty()) {
                     CMIMessages.consoleMessage("Could not identify enchantment: " + one.toString());
                     continue;
                 }

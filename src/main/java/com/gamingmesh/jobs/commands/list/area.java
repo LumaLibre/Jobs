@@ -13,7 +13,7 @@ import com.gamingmesh.jobs.config.RestrictedAreaManager;
 import com.gamingmesh.jobs.container.CuboidArea;
 import com.gamingmesh.jobs.container.CurrencyType;
 import com.gamingmesh.jobs.container.RestrictedArea;
-import com.gamingmesh.jobs.hooks.HookManager;
+import com.gamingmesh.jobs.hooks.JobsHook;
 import com.gamingmesh.jobs.i18n.Language;
 
 import net.Zrips.CMILib.Items.CMIMaterial;
@@ -63,8 +63,8 @@ public class area implements Cmd {
                         "%tool%", CMIMaterial.get(Jobs.getGCManager().getSelectionTool()).getName());
                     return true;
                 }
-                if (wg && HookManager.getWorldGuardManager() != null) {
-                    com.sk89q.worldguard.protection.regions.ProtectedRegion protectedRegion = HookManager.getWorldGuardManager().getProtectedRegionByName(name);
+                if (wg && JobsHook.WorldGuard.isEnabled()) {
+                    com.sk89q.worldguard.protection.regions.ProtectedRegion protectedRegion = JobsHook.getWorldGuardManager().getProtectedRegionByName(name);
 
                     if (protectedRegion == null) {
                         Language.sendMessage(sender, "command.area.output.wgDontExist");
@@ -73,10 +73,15 @@ public class area implements Cmd {
                     name = protectedRegion.getId();
                 }
 
-                if (!wg)
-                    ra.addNew(new RestrictedArea(name, Jobs.getSelectionManager().getSelectionCuboid(player), bonus), true);
-                else
-                    ra.addNew(new RestrictedArea(name, name, bonus), true);
+                if (!wg) {
+                    RestrictedArea restrictedArea = new RestrictedArea(name, Jobs.getSelectionManager().getSelectionCuboid(player), bonus);
+                    restrictedArea.setEnabled(true);
+                    ra.addNew(restrictedArea, true);
+                } else {
+                    RestrictedArea restrictedArea = new RestrictedArea(name, name, bonus);
+                    restrictedArea.setEnabled(true);
+                    ra.addNew(restrictedArea, true);
+                }
                 Language.sendMessage(sender, "command.area.output.addedNew", "%bonus%", bonus);
                 return true;
             }

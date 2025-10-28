@@ -10,8 +10,6 @@ import java.util.Set;
 
 import com.gamingmesh.jobs.Jobs;
 
-import net.Zrips.CMILib.Logs.CMIDebug;
-
 public class Quest {
 
     private String configName = "";
@@ -26,6 +24,8 @@ public class Quest {
     private boolean enabled = false;
 
     private final List<String> rewardCmds = new ArrayList<>(), rewards = new ArrayList<>(), area = new ArrayList<>();
+
+    private double rewardAmount = 0;
 
     private boolean stopped = false;
 
@@ -56,6 +56,11 @@ public class Quest {
             this.rewardCmds.addAll(rewardCmds);
         }
     }
+
+    public double getRewardAmount() { return rewardAmount; }
+
+    public void setRewardAmount(double rewardAmount) { this.rewardAmount = rewardAmount; }
+
 
     public List<String> getDescription() {
         return rewards;

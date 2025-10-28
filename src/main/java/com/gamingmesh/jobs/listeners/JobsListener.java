@@ -31,6 +31,7 @@ import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Dispenser;
@@ -76,8 +77,6 @@ import com.gamingmesh.jobs.Signs.SignUtil;
 import com.gamingmesh.jobs.Signs.jobsSign;
 import com.gamingmesh.jobs.api.JobsAreaSelectionEvent;
 import com.gamingmesh.jobs.api.JobsChunkChangeEvent;
-import com.gamingmesh.jobs.api.JobsInstancePaymentEvent;
-import com.gamingmesh.jobs.container.CurrencyType;
 import com.gamingmesh.jobs.container.Job;
 import com.gamingmesh.jobs.container.JobLimitedItems;
 import com.gamingmesh.jobs.container.JobProgression;
@@ -93,7 +92,6 @@ import net.Zrips.CMILib.Items.ArmorTypes;
 import net.Zrips.CMILib.Items.CMIItemStack;
 import net.Zrips.CMILib.Items.CMIMaterial;
 import net.Zrips.CMILib.Locale.LC;
-import net.Zrips.CMILib.Logs.CMIDebug;
 import net.Zrips.CMILib.Messages.CMIMessages;
 import net.Zrips.CMILib.NBT.CMINBT;
 import net.Zrips.CMILib.Version.Version;
@@ -195,7 +193,7 @@ public class JobsListener implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(final PlayerJoinEvent event) {
         if (Jobs.getGCManager().MultiServerCompatability()) {
-            CMIScheduler.runTaskLater(() -> Jobs.getPlayerManager().playerJoin(event.getPlayer()), 40L);
+            CMIScheduler.runTaskLater(plugin, () -> Jobs.getPlayerManager().playerJoin(event.getPlayer()), 40L);
         } else {
             Jobs.getPlayerManager().playerJoin(event.getPlayer());
         }
@@ -366,7 +364,7 @@ public class JobsListener implements Listener {
 
         event.setCancelled(true);
 
-        CMIScheduler.get().runTaskLater(() -> signUtil.signUpdate(job, type), 1L);
+        CMIScheduler.runTaskLater(plugin, () -> signUtil.signUpdate(job, type), 1L);
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -424,11 +422,8 @@ public class JobsListener implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onCropGrown(final BlockGrowEvent event) {
         if (Jobs.getGCManager().canPerformActionInWorld(event.getBlock().getWorld())) {
-            CMIScheduler.runAtLocationLater(event.getBlock().getLocation(), () -> {
-                if (Jobs.getGCManager().useNewBlockProtection)
-                    Jobs.getExploitManager().remove(event.getBlock());
-                else
-                    Jobs.getBpManager().remove(event.getBlock());
+            CMIScheduler.runAtLocationLater(plugin, event.getBlock().getLocation(), () -> {
+                Jobs.getExploitManager().remove(event.getBlock());
             }, 1L);
         }
     }
@@ -436,11 +431,8 @@ public class JobsListener implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onTreeGrown(final StructureGrowEvent event) {
         if (!event.getBlocks().isEmpty() && Jobs.getGCManager().canPerformActionInWorld(event.getBlocks().get(0).getWorld())) {
-            CMIScheduler.runAtLocationLater(event.getBlocks().get(0).getLocation(), () -> event.getBlocks().forEach(blockState -> {
-                if (Jobs.getGCManager().useNewBlockProtection)
-                    Jobs.getExploitManager().remove(blockState.getBlock());
-                else
-                    Jobs.getBpManager().remove(blockState.getBlock());
+            CMIScheduler.runAtLocationLater(plugin, event.getBlocks().get(0).getLocation(), () -> event.getBlocks().forEach(blockState -> {
+                Jobs.getExploitManager().remove(blockState.getBlock());
             }), 1L);
         }
     }
@@ -585,14 +577,32 @@ public class JobsListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onChunkChangeMove(PlayerMoveEvent event) {
-        if (!event.getPlayer().isOnline() || !Jobs.getGCManager().canPerformActionInWorld(event.getTo().getWorld()))
+        if (!event.getPlayer().isOnline() || event.getTo() == null || !Jobs.getGCManager().canPerformActionInWorld(event.getTo().getWorld()))
             return;
 
-        Chunk from = event.getFrom().getChunk();
-        Chunk to = event.getTo().getChunk();
-        if (!from.equals(to)) {
-            plugin.getServer().getPluginManager().callEvent(new JobsChunkChangeEvent(event.getPlayer(), from, to));
-        }
+        final Player player = event.getPlayer();
+        final Location toLoc = event.getTo().clone();
+        final Location fromLoc = event.getFrom().clone();
+
+        CMIScheduler.runAtLocationLater(plugin, toLoc, () -> {
+            final Chunk to = toLoc.getChunk();
+            final int toX = to.getX();
+            final int toZ = to.getZ();
+            final World toWorld = to.getWorld();
+
+            CMIScheduler.runAtLocationLater(plugin, fromLoc, () -> {
+                final Chunk from = fromLoc.getChunk();
+
+                final boolean changed =
+                    from.getWorld() != toWorld ||
+                    from.getX() != toX ||
+                    from.getZ() != toZ;
+
+                if (changed) {
+                    plugin.getServer().getPluginManager().callEvent(new JobsChunkChangeEvent(player, from, to));
+                }
+            }, 1L);
+        }, 1L);
     }
 
     @EventHandler(ignoreCancelled = true)

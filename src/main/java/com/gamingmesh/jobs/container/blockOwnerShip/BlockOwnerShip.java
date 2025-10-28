@@ -3,6 +3,7 @@ package com.gamingmesh.jobs.container.blockOwnerShip;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,9 @@ import com.gamingmesh.jobs.stuff.blockLoc;
 import net.Zrips.CMILib.Container.CMILocation;
 import net.Zrips.CMILib.FileHandler.ConfigReader;
 import net.Zrips.CMILib.Items.CMIMaterial;
-import net.Zrips.CMILib.Logs.CMIDebug;
 import net.Zrips.CMILib.Messages.CMIMessages;
+import net.Zrips.CMILib.Version.Schedulers.CMIScheduler;
+import net.Zrips.CMILib.Version.Schedulers.CMITask;
 
 public class BlockOwnerShip {
 
@@ -50,23 +52,10 @@ public class BlockOwnerShip {
         }
 
         material = type;
+        this.type = BlockTypes.getFromCMIMaterial(type);
 
-        switch (this.type = BlockTypes.getFromCMIMaterial(type)) {
-        case BLAST_FURNACE:
-            metadataName = "jobsBlastFurnaceOwner";
-            break;
-        case BREWING_STAND:
-            metadataName = "jobsBrewingOwner";
-            break;
-        case FURNACE:
-            metadataName = "jobsFurnaceOwner";
-            break;
-        case SMOKER:
-            metadataName = "jobsSmokerOwner";
-            break;
-        default:
-            break;
-        }
+        if (this.type != null)
+            metadataName = "jobs" + this.type.getPath();
     }
 
     public BlockTypes getType() {
@@ -98,7 +87,7 @@ public class BlockOwnerShip {
     }
 
     public ownershipFeedback register(Player player, Block block) {
-        if (type != BlockTypes.getFromCMIMaterial(CMIMaterial.get(block))) {
+        if (type != BlockTypes.getFromCMIMaterial(CMIMaterial.get(block.getType()))) {
             return ownershipFeedback.invalid;
         }
 
@@ -169,8 +158,7 @@ public class BlockOwnerShip {
 
         block.setMetadata(metadataName, new FixedMetadataValue(plugin, jPlayer.getUniqueId().toString()));
 
-        if (!Jobs.getGCManager().isBrewingStandsReassign() && !Jobs.getGCManager().isFurnacesReassign()
-            && !Jobs.getGCManager().BlastFurnacesReassign && !Jobs.getGCManager().SmokerReassign) {
+        if (!BlockTypes.isAnyToReasign()) {
             return ownershipFeedback.newReg;
         }
 
@@ -280,7 +268,9 @@ public class BlockOwnerShip {
             if (one.getBlock() == null)
                 continue;
 
-            one.getBlock().removeMetadata(metadataName, plugin);
+            Block block = one.getBlock();
+            if (block != null)
+                block.removeMetadata(metadataName, plugin);
 
             Map<String, UUID> oldRecord = ownerMapByLocation.get(one.getWorldName());
             if (oldRecord != null)
@@ -301,7 +291,9 @@ public class BlockOwnerShip {
             if (!one.getKey().equalsIgnoreCase(location))
                 continue;
 
-            one.getValue().getBlock().removeMetadata(metadataName, plugin);
+            Block block = one.getValue().getBlock();
+            if (block != null)
+                block.removeMetadata(metadataName, plugin);
 
             ls.remove(one.getKey());
 
@@ -388,52 +380,77 @@ public class BlockOwnerShip {
         }
     }
 
-    public static void save(HashMap<CMIMaterial, BlockOwnerShip> blockOwnerShipsMaterial) {
+    static CMITask saveTask = null;
 
-        File f = new File(Jobs.getInstance().getDataFolder(), "blockOwnerShips.yml");
+    public static void onDisable() {
 
-        ConfigReader cfg = null;
+        if (saveTask != null) {
+            saveTask.cancel();
+            saveTask = null;
+        }
+
+        save(new ArrayList<>(Jobs.getInstance().getBlockOwnerShips().values()));
+    }
+
+    public static void saveDelay() {
+
+        if (saveTask != null)
+            return;
+        // Limit to one save every minute max
+        saveTask = CMIScheduler.runLaterAsync(Jobs.getInstance(), () -> {
+            save(new ArrayList<>(Jobs.getInstance().getBlockOwnerShips().values()));
+            saveTask = null;
+        }, 60 * 20L);
+    }
+
+    private static void save(Collection<BlockOwnerShip> copy) {
+
         try {
-            cfg = new ConfigReader(f);
-        } catch (Exception e) {
+            File f = new File(Jobs.getInstance().getDataFolder(), "blockOwnerShips.yml");
+
+            ConfigReader cfg = null;
+            try {
+                cfg = new ConfigReader(f);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if (cfg == null)
+                return;
+
+            cfg.getC().options().copyDefaults(true);
+
+            for (BlockOwnerShip ownership : copy) {
+                if (ownership.isReassignDisabled()) {
+                    return;
+                }
+                String path = ownership.getType().getPath();
+
+                cfg.getC().set(path, null);
+
+                for (Entry<UUID, HashMap<String, blockLoc>> one : ownership.getBlockOwnerShips().entrySet()) {
+                    StringBuilder full = new StringBuilder();
+
+                    for (String oneL : one.getValue().keySet()) {
+                        if (!full.toString().isEmpty())
+                            full.append(";");
+                        full.append(oneL);
+                    }
+
+                    if (!full.toString().isEmpty())
+                        cfg.get(path + "." + one.getKey().toString(), full.toString());
+                }
+            }
+
+            cfg.save();
+
+        } catch (Throwable e) {
             e.printStackTrace();
         }
-
-        if (cfg == null)
-            return;
-
-        cfg.getC().options().copyDefaults(true);
-
-        for (BlockOwnerShip ownership : blockOwnerShipsMaterial.values()) {
-            if (ownership.isReassignDisabled()) {
-                return;
-            }
-            String path = ownership.getType().getPath();
-
-            cfg.getC().set(path, null);
-
-            for (Entry<UUID, HashMap<String, blockLoc>> one : ownership.blockOwnerShips.entrySet()) {
-                StringBuilder full = new StringBuilder();
-
-                for (String oneL : one.getValue().keySet()) {
-                    if (!full.toString().isEmpty())
-                        full.append(";");
-                    full.append(oneL);
-                }
-
-                if (!full.toString().isEmpty())
-                    cfg.get(path + "." + one.getKey().toString(), full.toString());
-            }
-        }
-
-        cfg.save();
     }
 
     public boolean isReassignDisabled() {
-        return (type == BlockTypes.FURNACE && !Jobs.getGCManager().isFurnacesReassign())
-            || (type == BlockTypes.BLAST_FURNACE && !Jobs.getGCManager().BlastFurnacesReassign)
-            || (type == BlockTypes.BREWING_STAND && !Jobs.getGCManager().isBrewingStandsReassign())
-            || (type == BlockTypes.SMOKER && !Jobs.getGCManager().SmokerReassign);
+        return !type.isReasign();
     }
 
     public enum ownershipFeedback {

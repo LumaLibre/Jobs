@@ -29,7 +29,6 @@ import com.gamingmesh.jobs.config.ShopManager;
 
 import net.Zrips.CMILib.Items.CMIAsyncHead;
 import net.Zrips.CMILib.Items.CMIItemStack;
-import net.Zrips.CMILib.Logs.CMIDebug;
 
 public class JobItems {
 
@@ -55,6 +54,9 @@ public class JobItems {
     }
 
     public CMIItemStack getItemStack(Player player, CMIAsyncHead ahead) {
+        if (itemString == null)
+            return null;
+
         CMIItemStack item = CMIItemStack.deserialize(itemString.replace("[player]", player == null ? "" : player.getName()), ahead);
 
         if (item != null) {

@@ -38,9 +38,9 @@ import com.gamingmesh.jobs.Jobs;
 import com.gamingmesh.jobs.container.CurrencyLimit;
 import com.gamingmesh.jobs.container.CurrencyType;
 import com.gamingmesh.jobs.container.MessageToggleState;
+import com.gamingmesh.jobs.container.blockOwnerShip.BlockTypes;
 
 import net.Zrips.CMILib.CMILib;
-import net.Zrips.CMILib.Container.CMIArray;
 import net.Zrips.CMILib.Container.CMIList;
 import net.Zrips.CMILib.Container.CMINumber;
 import net.Zrips.CMILib.Enchants.CMIEnchantment;
@@ -49,6 +49,7 @@ import net.Zrips.CMILib.FileHandler.ConfigReader;
 import net.Zrips.CMILib.Items.CMIItemStack;
 import net.Zrips.CMILib.Items.CMIMaterial;
 import net.Zrips.CMILib.Messages.CMIMessages;
+import net.Zrips.CMILib.Sounds.CMISound;
 import net.Zrips.CMILib.Version.Version;
 
 public class GeneralConfigManager {
@@ -70,27 +71,34 @@ public class GeneralConfigManager {
     protected boolean economyAsync, isBroadcastingSkillups, isBroadcastingLevelups, payInCreative, payExploringWhenFlying,
         addXpPlayer, hideJobsWithoutPermission, payNearSpawner, modifyChat, saveOnDisconnect, MultiServerCompatability;
 
-    public String modifyChatPrefix, modifyChatSuffix, modifyChatSeparator, SoundLevelupSound,
-        SoundTitleChangeSound, ServerAccountName, ServertaxesAccountName, localeString = "";
+    public CMISound soundLevelup;
+    public CMISound soundTitleChange;
+
+    public String modifyChatPrefix, modifyChatSuffix, modifyChatSeparator,
+        ServerAccountName, ServertaxesAccountName, localeString = "";
     private String getSelectionTool, DecimalPlacesMoney, DecimalPlacesExp, DecimalPlacesPoints;
+
+    public List<String> JobsTopHiddenPlayers;
 
     public int jobExpiryTime, BlockProtectionDays, FireworkPower, ShootTime, blockOwnershipRange,
         globalblocktimer, globalBlockBreakTimer, CowMilkingTimer, InfoUpdateInterval, JobsTopAmount, PlaceholdersPage, ConfirmExpiryTime,
-        SegmentCount, BossBarTimer, AutoJobJoinDelay, DBCleaningJobsLvl, DBCleaningUsersDays, BlastFurnacesMaxDefault, SmokersMaxDefault,
-        levelLossPercentageFromMax, levelLossPercentage, SoundLevelupVolume, SoundLevelupPitch, SoundTitleChangeVolume,
-        SoundTitleChangePitch, ToplistInScoreboardInterval;
+        SegmentCount, BossBarTimer, AutoJobJoinDelay, DBCleaningJobsLvl, DBCleaningUsersDays,
+        levelLossPercentageFromMax, levelLossPercentage, ToplistInScoreboardInterval;
 
     protected int savePeriod, maxJobs, economyBatchDelay;
-    private int ResetTimeHour, ResetTimeMinute, DailyQuestsSkips, FurnacesMaxDefault, BrewingStandsMaxDefault,
-        BrowseAmountToShow, JobsGUIRows, JobsGUIBackButton, JobsGUINextButton, JobsGUIStartPosition, JobsGUIGroupAmount, JobsGUISkipAmount;
+    private int ResetTimeHour, ResetTimeMinute, DailyQuestsSkips,
+        BrowseAmountToShow,
+        JobsGUIRows;
 
     public double skipQuestCost, MinimumOveralPaymentLimit, minimumOveralExpLimit, MinimumOveralPointsLimit, MonsterDamagePercentage,
         DynamicPaymentMaxPenalty, DynamicPaymentMaxBonus, TaxesAmount, TreeFellerMultiplier, gigaDrillMultiplier, superBreakerMultiplier;
 
     public float maxPaymentCurveFactor;
 
-    private boolean FurnacesReassign, BrewingStandsReassign, useTnTFinder = false, ShowNewVersion;
+    private boolean useTnTFinder = false, ShowNewVersion;
     private boolean InformDuplicates, DailyQuestsUseGUI;
+
+    private boolean JobsGUIAddEdge;
 
     private FireworkEffect fireworkEffect;
 
@@ -108,16 +116,17 @@ public class GeneralConfigManager {
         EmptyServerAccountActionBar, ShowTotalWorkers, ShowPenaltyBonus, useDynamicPayment,
         JobsGUIOpenOnBrowse, JobsGUIShowChatBrowse, JobsGUISwitcheButtons, ShowActionNames, hideItemAttributes,
         DisableJoiningJobThroughGui, FireworkLevelupUse, UseRandom, UsePerPermissionForLeaving,
-        EnableConfirmation, jobsInfoOpensBrowse, MonsterDamageUse, MonsterDamageIgnoreBosses, tameablesPayout, useMaxPaymentCurve, blockOwnershipTakeOver,
+        EnableConfirmation, jobsInfoOpensBrowse, MonsterDamageUse, MonsterDamageIgnoreBosses, tameablesPayout, useMaxPaymentCurve, blockOwnershipTakeOver, blockOwnershipDisabled,
         hideJobsInfoWithoutPermission, UseTaxes, TransferToServerAccount, TakeFromPlayersPayment, AutoJobJoinUse, AllowDelevel, RomanNumbers,
         BossBarEnabled = false, ActionBarEnabled, ExploreCompact, ExploreSaveIntoDatabase = false, DBCleaningJobsUse, DBCleaningUsersUse,
         DisabledWorldsUse, UseAsWhiteListWorldList, MythicMobsEnabled,
-        LoggingUse, payForCombiningItems, BlastFurnacesReassign = false, SmokerReassign = false, payForStackedEntities, payForAbove = false,
-        payForEachVTradeItem, allowEnchantingBoostedItems, preventShopItemEnchanting;
+        LoggingUse, payForCombiningItems, payForStackedEntities, payForAbove = false,
+        payForEachVTradeItem, allowEnchantingBoostedItems, preventShopItemEnchanting, useCustomFishingOnly = false, boostPersistenceEnabled = true;
     public MessageToggleState BossBarsMessageDefault = MessageToggleState.Rapid;
     public MessageToggleState ActionBarsMessageDefault = MessageToggleState.Rapid;
     public MessageToggleState ChatTextMessageDefault = MessageToggleState.Batched;
 
+    public int jobsStatsBarCount;
     public int ActionBarsMessageKeepFor;
 
     public boolean jobsshopenabled;
@@ -241,6 +250,10 @@ public class GeneralConfigManager {
         return saveOnDisconnect;
     }
 
+    public boolean isBoostPersistenceEnabled() {
+        return boostPersistenceEnabled;
+    }
+
     public boolean MultiServerCompatability() {
         return MultiServerCompatability;
     }
@@ -358,6 +371,12 @@ public class GeneralConfigManager {
             "Player data is always periodically auto-saved and autosaved during a clean shutdown.",
             "Only enable this if you have a multi-server setup, or have a really good reason for enabling this.", "Turning this on will decrease database performance.");
         saveOnDisconnect = c.get("save-on-disconnect", false);
+
+        c.addComment("boost-persistence", "Should job boosts persist across server restarts?",
+            "When enabled, boosts applied via /jobs boost command will be saved and restored after server restart.",
+            "This ensures that timed boosts continue for their full duration even if the server restarts.",
+            "Set to false if this feature causes issues with your server setup.");
+        boostPersistenceEnabled = c.get("boost-persistence", true);
 
         c.addComment("selectionTool", "Tool used when selecting bounds for restricted area.");
         getSelectionTool = c.get("selectionTool", "golden_hoe");
@@ -860,33 +879,35 @@ public class GeneralConfigManager {
             "Set to 0 if you want to disable timer");
         CowMilkingTimer = c.get("Economy.MilkingCow.Timer", 30) * 1000;
 
+        BlockTypes.anyToReasign = false;
+
         c.addComment("ExploitProtections.Furnaces.Reassign",
             "When enabled, players interacted furnaces will be saved into a file and will be reassigned after restart to keep giving out money",
             "Players will no longer need to click on furnace to get paid from it after server restart");
-        FurnacesReassign = c.get("ExploitProtections.Furnaces.Reassign", true);
+        BlockTypes.FURNACE.setReasign(c.get("ExploitProtections.Furnaces.Reassign", true));
         c.addComment("ExploitProtections.Furnaces.MaxDefaultAvailable",
             "Defines max available furnaces each player can have to get paid from",
             "This can be overridden with jobs.maxfurnaces.[amount] permission node");
-        FurnacesMaxDefault = c.get("ExploitProtections.Furnaces.MaxDefaultAvailable", 20);
+        BlockTypes.FURNACE.setMaxDefault(c.get("ExploitProtections.Furnaces.MaxDefaultAvailable", 20));
 
         if (Version.isCurrentEqualOrHigher(Version.v1_14_R1)) {
-            BlastFurnacesReassign = c.get("ExploitProtections.BlastFurnaces.Reassign", true);
-            BlastFurnacesMaxDefault = c.get("ExploitProtections.BlastFurnaces.MaxDefaultAvailable", 15);
+            BlockTypes.BLAST_FURNACE.setReasign(c.get("ExploitProtections.BlastFurnaces.Reassign", true));
+            BlockTypes.BLAST_FURNACE.setMaxDefault(c.get("ExploitProtections.BlastFurnaces.MaxDefaultAvailable", 15));
 
-            SmokerReassign = c.get("ExploitProtections.Smokers.Reassign", true);
-            SmokersMaxDefault = c.get("ExploitProtections.Smokers.MaxDefaultAvailable", 15);
-        } 
+            BlockTypes.SMOKER.setReasign(c.get("ExploitProtections.Smokers.Reassign", true));
+            BlockTypes.SMOKER.setMaxDefault(c.get("ExploitProtections.Smokers.MaxDefaultAvailable", 15));
+        }
 
         c.addComment("ExploitProtections.BrewingStands.Reassign",
             "When enabled, players interacted brewing stands will be saved into file and will be reassigned after restart to keep giving out money",
             "Players will no longer need to click on brewing stand to get paid from it after server restart");
-        BrewingStandsReassign = c.get("ExploitProtections.BrewingStands.Reassign", true);
-        
+        BlockTypes.BREWING_STAND.setReasign(c.get("ExploitProtections.BrewingStands.Reassign", true));
+
         c.addComment("ExploitProtections.BrewingStands.MaxDefaultAvailable",
             "Defines max available brewing stands each player can have to get paid from",
             "Set to 0 if you want to disable this limitation",
             "This can be overridden with jobs.maxbrewingstands.[amount] permission node");
-        BrewingStandsMaxDefault = c.get("ExploitProtections.BrewingStands.MaxDefaultAvailable", 20);
+        BlockTypes.BREWING_STAND.setMaxDefault(c.get("ExploitProtections.BrewingStands.MaxDefaultAvailable", 20));
 
         c.addComment("ExploitProtections.General.PlaceAndBreak.Enabled",
             "Enable blocks protection, like ore, from exploiting by placing and destroying same block again and again.",
@@ -962,6 +983,11 @@ public class GeneralConfigManager {
         c.addComment("ExploitProtections.MythicMobs", "MythicMobs plugin support", "Disable if you having issues with it or using old version");
         MythicMobsEnabled = c.get("ExploitProtections.MythicMobs.enabled", true);
 
+        c.addComment("ExploitProtections.CustomFishing", "CustomFishing plugin support (Optional)",
+            "If setting is enabled, Fish and PyroFishingPro actions are disabled and only CustomFishing action is enabled.",
+            "Leave it disabled if you're not experiencing issues because of CustomFishing Plugin.");
+        useCustomFishingOnly = c.get("ExploitProtections.CustomFishing.Use-CustomFishing-Only", false);
+
         // Only applies for older versions.
         if (Version.isCurrentLower(Version.v1_14_R1)) {
             c.addComment("ExploitProtections.Spawner.PreventSlimeSplit", "Prevent slime splitting when they are from spawner",
@@ -993,11 +1019,11 @@ public class GeneralConfigManager {
             "Percentage to loose when leaving job at max level",
             "Only works when fix-at-max-level is set to false");
         levelLossPercentageFromMax = c.get("old-job.level-loss-from-max-level", levelLossPercentage);
-        
+
         c.addComment("ChatText.Messages.DefaultState", "States of chat text messages when payment is issued", "Valid options: Off, Batched",
             "This will be used if player disables action bar payment messages");
         ChatTextMessageDefault = MessageToggleState.getByName(c.get("ChatText.Messages.DefaultState", MessageToggleState.Off.toString()));
-        
+
         c.addComment("ActionBars.Enabled", "Enables ActionBar messages");
         ActionBarEnabled = c.get("ActionBars.Enabled", true);
 
@@ -1035,13 +1061,18 @@ public class GeneralConfigManager {
         c.addComment("Sounds", "Extra sounds on some events",
             "All sounds can be found in https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Sound.html");
         SoundLevelupUse = c.get("Sounds.LevelUp.use", true);
-        SoundLevelupSound = c.get("Sounds.LevelUp.sound", Version.isCurrentLower(Version.v1_9_R1) ? "LEVEL_UP " : "ENTITY_PLAYER_LEVELUP").toUpperCase();
-        SoundLevelupVolume = c.get("Sounds.LevelUp.volume", 1);
-        SoundLevelupPitch = c.get("Sounds.LevelUp.pitch", 3);
+        String SoundLevelupSound = c.get("Sounds.LevelUp.sound", Version.isCurrentLower(Version.v1_9_R1) ? "LEVEL_UP" : Version.isCurrentEqualOrHigher(Version.v1_21_R3) ? "ENTITY.PLAYER.LEVELUP"
+            : "ENTITY_PLAYER_LEVELUP").toUpperCase();
+        float SoundLevelupVolume = c.get("Sounds.LevelUp.volume", 1D).floatValue();
+        float SoundLevelupPitch = c.get("Sounds.LevelUp.pitch", 3D).floatValue();
+        soundLevelup = new CMISound(SoundLevelupSound, SoundLevelupVolume, SoundLevelupPitch);
+
         SoundTitleChangeUse = c.get("Sounds.TitleChange.use", true);
-        SoundTitleChangeSound = c.get("Sounds.TitleChange.sound", Version.isCurrentLower(Version.v1_9_R1) ? "LEVEL_UP " : "ENTITY_PLAYER_LEVELUP").toUpperCase();
-        SoundTitleChangeVolume = c.get("Sounds.TitleChange.volume", 1);
-        SoundTitleChangePitch = c.get("Sounds.TitleChange.pitch", 3);
+        String SoundTitleChangeSound = c.get("Sounds.TitleChange.sound", Version.isCurrentLower(Version.v1_9_R1) ? "LEVEL_UP" : Version.isCurrentEqualOrHigher(Version.v1_21_R3) ? "ENTITY.PLAYER.LEVELUP"
+            : "ENTITY_PLAYER_LEVELUP").toUpperCase();
+        float SoundTitleChangeVolume = c.get("Sounds.TitleChange.volume", 1D).floatValue();
+        float SoundTitleChangePitch = c.get("Sounds.TitleChange.pitch", 3D).floatValue();
+        soundTitleChange = new CMISound(SoundTitleChangeSound, SoundTitleChangeVolume, SoundTitleChangePitch);
 
         c.addComment("Fireworks", "Extra firework shooting in some events");
         FireworkLevelupUse = c.get("Fireworks.LevelUp.use", false);
@@ -1135,20 +1166,18 @@ public class GeneralConfigManager {
         ShowActionNames = c.get("JobsGUI.ShowActionNames", true);
         c.addComment("JobsGUI.HideItemAttributes", "Do we hide all item attributes in GUI?");
         hideItemAttributes = c.get("JobsGUI.HideItemAttributes", true);
-        c.addComment("JobsGUI.Rows", "Defines size in rows of GUI");
-        JobsGUIRows = c.get("JobsGUI.Rows", 5);
-        c.addComment("JobsGUI.BackButtonSlot", "Defines back button slot in GUI");
-        JobsGUIBackButton = c.get("JobsGUI.BackButtonSlot", 37);
-        c.addComment("JobsGUI.NextButtonSlot", "Defines next button slot in GUI");
-        JobsGUINextButton = c.get("JobsGUI.NextButtonSlot", 45);
-        c.addComment("JobsGUI.StartPosition", "Defines start position in gui from which job icons will be shown");
-        JobsGUIStartPosition = c.get("JobsGUI.StartPosition", 11);
-        c.addComment("JobsGUI.GroupAmount", "Defines by how many jobs we need to group up");
-        JobsGUIGroupAmount = c.get("JobsGUI.GroupAmount", 7);
-        c.addComment("JobsGUI.SkipAmount", "Defines by how many slots we need to skip after group");
-        JobsGUISkipAmount = c.get("JobsGUI.SkipAmount", 2);
 
-        c.addComment("JobsGUI.InfoButton.Slot", "Slot for info button. Set it to 0 if you want to disable it", "Locale can be customized in locale file under gui->infoLore section");
+        c.addComment("JobsGUI.AddEdge", "Should browse gui contain edge so only up to 28 middle slots are being used");
+        JobsGUIAddEdge = c.get("JobsGUI.AddEdge", true);
+
+        c.addComment("JobsGUI.RowCount", "Defines GUI row count. If set to 0 then size will auto adjust to fit in as many icons as possible");
+
+        JobsGUIRows = CMINumber.clamp(c.get("JobsGUI.RowCount", 0), 0, 6);
+        if (JobsGUIRows > 0 && JobsGUIRows < 3 && JobsGUIAddEdge)
+            JobsGUIRows = 3;
+
+        c.addComment("JobsGUI.InfoButton.Slot", "Only works if you have AddEdge enabled", "Slot for info button. Set it to 0 if you want to disable it",
+            "Locale can be customized in locale file under gui->infoLore section");
         InfoButtonSlot = c.get("JobsGUI.InfoButton.Slot", 9);
 
         CMIItemStack item = CMILib.getInstance().getItemManager().getItem(c.get("JobsGUI.InfoButton.Material",
@@ -1188,6 +1217,11 @@ public class GeneralConfigManager {
 
         c.addComment("Commands.PageRow.JobsTop.AmountToShow", "Defines amount of players to be shown in one page for /jobs top & /jobs gtop");
         JobsTopAmount = c.get("Commands.PageRow.JobsTop.AmountToShow", 15);
+
+        c.addComment("Commands.PageRow.JobsTop.HiddenPlayers", "List of player names who should be excluded from /jobs top & /jobs gtop");
+        JobsTopHiddenPlayers = c.get("Commands.PageRow.JobsTop.HiddenPlayers", Arrays.asList("Zrips"));
+        CMIList.toLowerCase(JobsTopHiddenPlayers);
+
         c.addComment("Commands.PageRow.Placeholders.AmountToShow", "Defines amount of placeholders to be shown in one page for /jobs placeholders");
         PlaceholdersPage = c.get("Commands.PageRow.Placeholders.AmountToShow", 10);
         c.addComment("Commands.JobsLeave.UsePerPermissionLeave", "Defines how job leave works.",
@@ -1200,12 +1234,18 @@ public class GeneralConfigManager {
         c.addComment("Commands.JobsInfo.open-browse", "Open up the jobs browse action list, when your performed /jobs info command?");
         jobsInfoOpensBrowse = c.get("Commands.JobsInfo.open-browse", false);
 
+        c.addComment("Commands.Stats.BarCount", "Amount of progress bars to be shown in /jobs stats command");
+        jobsStatsBarCount = c.get("Commands.Stats.BarCount", 50);
+
         c.addComment("BlockOwnership.Range", "Set to 0 or lower if you want to disable this. Setting to positive number will mean that player needs to be in this range from owner block to get paid");
         blockOwnershipRange = c.get("BlockOwnership.Range", 0);
 
         c.addComment("BlockOwnership.TakeOver", "When enabled by interacting with furncae ownership will get transfered to new player",
             "If set to false then furnace will belong to player who interacted with it first until its ownership is removed");
         blockOwnershipTakeOver = c.get("BlockOwnership.TakeOver", false);
+
+        c.addComment("BlockOwnership.Disabled", "When set to true, all checks and actions regarding ownership will no longer be carried out. This mode does not cause a loss of any already existing data.");
+        blockOwnershipDisabled = c.get("BlockOwnership.Disabled", false);
 
         c.save();
     }
@@ -1226,20 +1266,24 @@ public class GeneralConfigManager {
         return ResetTimeMinute;
     }
 
+    @Deprecated
     public boolean isFurnacesReassign() {
-        return FurnacesReassign;
+        return BlockTypes.FURNACE.isReasign();
     }
 
+    @Deprecated
     public boolean isBrewingStandsReassign() {
-        return BrewingStandsReassign;
+        return BlockTypes.BREWING_STAND.isReasign();
     }
 
+    @Deprecated
     public int getFurnacesMaxDefault() {
-        return FurnacesMaxDefault;
+        return BlockTypes.FURNACE.getMaxDefault();
     }
 
+    @Deprecated
     public int getBrewingStandsMaxDefault() {
-        return BrewingStandsMaxDefault;
+        return BlockTypes.BREWING_STAND.getMaxDefault();
     }
 
     public int getBrowseAmountToShow() {
@@ -1259,46 +1303,11 @@ public class GeneralConfigManager {
     }
 
     public int getJobsGUIRows() {
-        if (JobsGUIRows < 1)
-            JobsGUIRows = 1;
         return JobsGUIRows;
     }
 
-    public int getJobsGUIBackButton() {
-        if (JobsGUIBackButton < 1)
-            JobsGUIBackButton = 1;
-
-        int mult = JobsGUIRows * 9;
-        if (JobsGUIBackButton > mult)
-            JobsGUIBackButton = mult;
-
-        return JobsGUIBackButton - 1;
-    }
-
-    public int getJobsGUINextButton() {
-        if (JobsGUINextButton < 1)
-            JobsGUINextButton = 1;
-
-        int mult = JobsGUIRows * 9;
-        if (JobsGUINextButton > mult)
-            JobsGUINextButton = mult;
-
-        return JobsGUINextButton - 1;
-    }
-
-    public int getJobsGUIStartPosition() {
-        if (JobsGUIBackButton < 1)
-            JobsGUIBackButton = 1;
-
-        return JobsGUIStartPosition - 1;
-    }
-
-    public int getJobsGUIGroupAmount() {
-        return JobsGUIGroupAmount;
-    }
-
-    public int getJobsGUISkipAmount() {
-        return JobsGUISkipAmount;
+    public boolean isJobsGUIAddEdge() {
+        return JobsGUIAddEdge;
     }
 
     public double getGeneralMulti(CurrencyType type) {

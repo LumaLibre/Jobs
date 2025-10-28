@@ -21,16 +21,14 @@ package com.gamingmesh.jobs.container;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.function.BiPredicate;
 
-import com.gamingmesh.jobs.actions.EnchantActionInfo;
-import com.gamingmesh.jobs.stuff.Util;
+import javax.annotation.Nonnull;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -40,16 +38,20 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import com.gamingmesh.jobs.Jobs;
 import com.gamingmesh.jobs.Gui.GuiItem;
+import com.gamingmesh.jobs.actions.EnchantActionInfo;
 import com.gamingmesh.jobs.actions.PotionItemActionInfo;
+import com.gamingmesh.jobs.container.JobsTop.topStats;
+import com.gamingmesh.jobs.stuff.Util;
+import com.gamingmesh.jobs.BoostManager;
 
 import net.Zrips.CMILib.Colors.CMIChatColor;
 import net.Zrips.CMILib.Container.CMINumber;
 import net.Zrips.CMILib.Equations.Parser;
 import net.Zrips.CMILib.Items.CMIMaterial;
-import net.Zrips.CMILib.Logs.CMIDebug;
 
 public class Job {
 
@@ -84,7 +86,7 @@ public class Job {
 
     private GuiItem guiItem = null;
 
-    private Long rejoinCd = 0L;
+    private long rejoinCd = 0L;
 
     private int totalPlayers = -1;
     private Double bonus;
@@ -103,6 +105,8 @@ public class Job {
     private int id = 0;
     private int legacyId = 0;
     private boolean ignoreMaxJobs = false;
+
+    private JobsTop topList = new JobsTop();
 
     public Job(String jobName) {
         this.jobName = jobName == null ? "" : jobName;
@@ -157,6 +161,12 @@ public class Job {
      */
     public void addBoost(CurrencyType type, double point) {
         boost.add(type, point);
+        // Notify boost manager to save the updated boosts
+        try {
+            BoostManager.onBoostAdded();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -179,6 +189,12 @@ public class Job {
         }
 
         boost.add(type, point, System.currentTimeMillis() + (duration * 1000L));
+        // Notify boost manager to save the updated boosts
+        try {
+            BoostManager.onBoostAdded();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     public void setBoost(BoostMultiplier boost) {
@@ -811,5 +827,25 @@ public class Job {
 
     public void setLegacyId(int legacyId) {
         this.legacyId = legacyId;
+    }
+
+    public void updateTop(@NotNull UUID uuid, int level, double experience) {
+        topList.updateAsync(uuid, level, experience);
+    }
+
+    public void removeFromTop(UUID uuid) {
+        topList.removeAsync(uuid);
+    }
+
+    public UUID getTop(int index) {
+        return topList.getByPosition(index);
+    }
+
+    public List<UUID> getTopList(int limit) {
+        return topList.getTop(limit);
+    }
+
+    public topStats getTopStats(UUID uuid) {
+        return topList.getStats(uuid);
     }
 }

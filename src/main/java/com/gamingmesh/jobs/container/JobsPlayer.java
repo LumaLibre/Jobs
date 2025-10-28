@@ -34,7 +34,8 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import com.gamingmesh.jobs.Jobs;
-import com.gamingmesh.jobs.permissionInfo;
+import com.gamingmesh.jobs.JobsPermissionInfo;
+import com.gamingmesh.jobs.PermissionManager;
 import com.gamingmesh.jobs.Signs.SignTopType;
 import com.gamingmesh.jobs.api.JobsLevelUpEvent;
 import com.gamingmesh.jobs.container.blockOwnerShip.BlockTypes;
@@ -46,7 +47,6 @@ import net.Zrips.CMILib.Colors.CMIChatColor;
 import net.Zrips.CMILib.Container.CMINumber;
 import net.Zrips.CMILib.Equations.Parser;
 import net.Zrips.CMILib.Items.CMIMaterial;
-import net.Zrips.CMILib.Logs.CMIDebug;
 import net.Zrips.CMILib.Time.CMITimeManager;
 import net.Zrips.CMILib.Version.Schedulers.CMIScheduler;
 import net.Zrips.CMILib.Version.Schedulers.CMITask;
@@ -88,8 +88,6 @@ public class JobsPlayer {
     private Map<String, Log> logList = new HashMap<>();
 
     private long seen = System.currentTimeMillis();
-
-    private Map<String, permissionInfo> permissionsCache = new HashMap<>();
 
     private final Map<String, Map<String, QuestProgression>> qProgression = new HashMap<>();
     private int doneQuests = 0;
@@ -473,7 +471,7 @@ public class JobsPlayer {
     /**
      * @return an unmodifiable list of job progressions
      */
-    public List<JobProgression> getJobProgression() {
+    public synchronized List<JobProgression> getJobProgression() {
         return Collections.unmodifiableList(progression);
     }
 
@@ -654,6 +652,10 @@ public class JobsPlayer {
     public boolean leaveJob(Job job) {
         synchronized (progression) {
             if (progression.remove(getJobProgression(job))) {
+
+                job.removeFromTop(getUniqueId());
+                JobsTop.updateGlobalTop(getUniqueId(), getJobProgression());
+
                 reloadMaxExperience();
                 reloadLimits();
                 reloadHonorific();
@@ -743,12 +745,8 @@ public class JobsPlayer {
                 JobsLevelUpEvent levelUpEvent = new JobsLevelUpEvent(this, job, prog.getLevel(),
                     Jobs.getTitleManager().getTitle(oldLevel, prog.getJob().getName()),
                     Jobs.getTitleManager().getTitle(prog.getLevel(), prog.getJob().getName()),
-                    Jobs.getGCManager().SoundLevelupSound,
-                    Jobs.getGCManager().SoundLevelupVolume,
-                    Jobs.getGCManager().SoundLevelupPitch,
-                    Jobs.getGCManager().SoundTitleChangeSound,
-                    Jobs.getGCManager().SoundTitleChangeVolume,
-                    Jobs.getGCManager().SoundTitleChangePitch);
+                    Jobs.getGCManager().soundLevelup,
+                    Jobs.getGCManager().soundTitleChange);
 
                 plugin.getServer().getPluginManager().callEvent(levelUpEvent);
             }
@@ -976,7 +974,7 @@ public class JobsPlayer {
         isOnline = false;
         blockOwnerShipInform = null;
 
-        permissionsCache.clear();
+        PermissionManager.removePermissionCache(getUniqueId());
 
         Jobs.getPlayerManager().addPlayerToCache(this);
     }
@@ -1019,16 +1017,16 @@ public class JobsPlayer {
         this.seen = seen;
     }
 
-    public Map<String, permissionInfo> getPermissionsCache() {
-        return permissionsCache;
+    public Map<String, JobsPermissionInfo> getPermissionsCache() {
+        return PermissionManager.getPermissionsCache(this.getUniqueId()).getPermissionsCache();
     }
 
-    public permissionInfo getPermissionsCache(String perm) {
-        return permissionsCache.getOrDefault(perm, new permissionInfo());
+    public JobsPermissionInfo getPermissionsCache(String perm) {
+        return PermissionManager.getPermissionsCache(this.getUniqueId()).getPermissionsCache(perm);
     }
 
-    public void addToPermissionsCache(String permission, permissionInfo permInfo) {
-        permissionsCache.put(permission, permInfo);
+    public void addToPermissionsCache(String permission, JobsPermissionInfo permInfo) {
+        PermissionManager.getPermissionsCache(this.getUniqueId()).addToPermissionsCache(permission, permInfo);
     }
 
     /**
@@ -1381,17 +1379,19 @@ public class JobsPlayer {
 
     public void setDoneQuests(int doneQuests) {
         this.doneQuests = doneQuests;
+        JobsQuestTop.updateGlobalTop(this.getUniqueId(), doneQuests);
     }
 
     private CMITask questSignUpdateShed;
 
     public void addDoneQuest(final Job job) {
-        doneQuests++;
+
+        setDoneQuests(getDoneQuests() + 1);
 
         setSaved(false);
 
         if (questSignUpdateShed == null) {
-            questSignUpdateShed = CMIScheduler.get().runTaskLater(() -> {
+            questSignUpdateShed = CMIScheduler.runTaskLater(plugin, () -> {
                 Jobs.getSignUtil().signUpdate(job, SignTopType.questtoplist);
                 questSignUpdateShed = null;
             }, Jobs.getGCManager().getSavePeriod() * 60 * 20L);
@@ -1404,7 +1404,7 @@ public class JobsPlayer {
      */
     @Deprecated
     public int getFurnaceCount() {
-        return !plugin.getBlockOwnerShip(BlockTypes.FURNACE).isPresent() ? 0 : plugin.getBlockOwnerShip(BlockTypes.FURNACE).get().getTotal(getUniqueId());
+        return getOwnerShipCount(BlockTypes.FURNACE);
     }
 
     /**
@@ -1413,7 +1413,11 @@ public class JobsPlayer {
      */
     @Deprecated
     public int getBrewingStandCount() {
-        return !plugin.getBlockOwnerShip(BlockTypes.BREWING_STAND).isPresent() ? 0 : plugin.getBlockOwnerShip(BlockTypes.BREWING_STAND).get().getTotal(getUniqueId());
+        return getOwnerShipCount(BlockTypes.BREWING_STAND);
+    }
+
+    public int getOwnerShipCount(BlockTypes type) {
+        return !plugin.getBlockOwnerShip(type).isPresent() ? 0 : plugin.getBlockOwnerShip(type).get().getTotal(getUniqueId());
     }
 
     /**
@@ -1446,32 +1450,12 @@ public class JobsPlayer {
      */
     public int getMaxOwnerShipAllowed(BlockTypes type) {
         double maxV = Jobs.getPermissionManager().getMaxPermission(this, "jobs.maxownership");
-        if (maxV > 0D) {
+        if (maxV > 0D)
             return (int) maxV;
-        }
 
-        if (type != BlockTypes.BREWING_STAND &&
-            (maxV = Jobs.getPermissionManager().getMaxPermission(this, "jobs.maxfurnaceownership")) > 0D) {
-            return (int) maxV;
-        }
-
-        String perm = "jobs.max" + (type == BlockTypes.FURNACE
-            ? "furnaces" : type == BlockTypes.BLAST_FURNACE ? "blastfurnaces" : type == BlockTypes.SMOKER ? "smokers"
-                : type == BlockTypes.BREWING_STAND ? "brewingstands" : "");
-
-        maxV = Jobs.getPermissionManager().getMaxPermission(this, perm);
-
-        if (maxV == 0D && type == BlockTypes.FURNACE)
-            maxV = Jobs.getGCManager().getFurnacesMaxDefault();
-
-        if (maxV == 0D && type == BlockTypes.BLAST_FURNACE)
-            maxV = Jobs.getGCManager().BlastFurnacesMaxDefault;
-
-        if (maxV == 0D && type == BlockTypes.SMOKER)
-            maxV = Jobs.getGCManager().SmokersMaxDefault;
-
-        if (maxV == 0D && type == BlockTypes.BREWING_STAND)
-            maxV = Jobs.getGCManager().getBrewingStandsMaxDefault();
+        maxV = Jobs.getPermissionManager().getMaxPermission(this, "jobs.max" + type.getPermissionNode());
+        if (maxV <= 0D)
+            maxV = type.getMaxDefault();
 
         return (int) maxV;
     }
@@ -1535,4 +1519,5 @@ public class JobsPlayer {
             return Jobs.getEconomy().getEconomy().withdrawPlayer(this.getPlayer(), amount);
         return Jobs.getEconomy().getEconomy().withdrawPlayer(this.getName(), amount);
     }
+
 }

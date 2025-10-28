@@ -26,12 +26,11 @@ import com.gamingmesh.jobs.container.CurrencyType;
 import com.gamingmesh.jobs.container.JobProgression;
 import com.gamingmesh.jobs.container.LevelLimits;
 import com.gamingmesh.jobs.container.RestrictedArea;
-import com.gamingmesh.jobs.hooks.HookManager;
+import com.gamingmesh.jobs.hooks.JobsHook;
 
 import net.Zrips.CMILib.Container.CMINumber;
 import net.Zrips.CMILib.Container.CMIText;
 import net.Zrips.CMILib.Container.CuboidArea.ChunkRef;
-import net.Zrips.CMILib.Logs.CMIDebug;
 import net.Zrips.CMILib.Messages.CMIMessages;
 
 public class RestrictedAreaManager {
@@ -111,7 +110,7 @@ public class RestrictedAreaManager {
             conf.set("restrictedareas." + areaKey + ".enabled", area.isEnabled());
 
             for (Entry<CurrencyType, Double> one : area.getMultipliers().entrySet()) {
-                conf.set("restrictedareas." + areaKey + ".multipliers." + one.getKey(), one.getValue());
+                conf.set("restrictedareas." + areaKey + ".multipliers." + CMIText.firstToUpperCase(one.getKey().name()), one.getValue());
             }
 
             if (area.getWgName() == null) {
@@ -157,7 +156,7 @@ public class RestrictedAreaManager {
 
         for (RestrictedArea area : getByLocation(player.getLocation())) {
             if (!area.inRestrictedArea(player.getLocation()) ||
-                (area.getWgName() != null && HookManager.getWorldGuardManager() != null && !HookManager.getWorldGuardManager().inArea(player.getLocation(), area.getWgName())))
+                (area.getWgName() != null && JobsHook.WorldGuard.isEnabled() && !JobsHook.getWorldGuardManager().inArea(player.getLocation(), area.getWgName())))
                 continue;
 
             if (area.getJobs().isEmpty())
@@ -236,14 +235,16 @@ public class RestrictedAreaManager {
             conf.set("restrictedareas.area1.point2", "150;100;150");
             conf.set("restrictedareas.area1.jobs", Arrays.asList("digger-0-100"));
 
-            conf.set("restrictedareas.area2.enabled", false);
-            for (CurrencyType one : CurrencyType.values()) {
-                conf.set("restrictedareas.area2.multipliers." + CMIText.firstToUpperCase(one.toString()), CMINumber.random(-10, 10) / 10D);
+            if (Bukkit.getWorlds().size() > 1) {
+                conf.set("restrictedareas.area2.enabled", false);
+                for (CurrencyType one : CurrencyType.values()) {
+                    conf.set("restrictedareas.area2.multipliers." + CMIText.firstToUpperCase(one.toString()), CMINumber.random(-10, 10) / 10D);
+                }
+                conf.set("restrictedareas.area2.world", Bukkit.getWorlds().get(1).getName());
+                conf.set("restrictedareas.area2.point1", "-100;0;-100");
+                conf.set("restrictedareas.area2.point2", "-150;100;-150");
+                conf.set("restrictedareas.area2.jobs", Arrays.asList("all-5-15"));
             }
-            conf.set("restrictedareas.area2.world", Bukkit.getWorlds().get(1).getName());
-            conf.set("restrictedareas.area2.point1", "-100;0;-100");
-            conf.set("restrictedareas.area2.point2", "-150;100;-150");
-            conf.set("restrictedareas.area2.jobs", Arrays.asList("all-5-15"));
         }
 
         ConfigurationSection areaSection = conf.getConfigurationSection("restrictedareas");

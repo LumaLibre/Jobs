@@ -142,21 +142,24 @@ public class JobsPaymentVisualizationListener implements Listener {
         String message = Jobs.getLanguage().getMessage("command.toggle.output.paid.main");
         double money = event.get(CurrencyType.MONEY);
         if (money != 0D)
-            message += " " + Jobs.getLanguage().getMessage("command.toggle.output.paid.money", "[amount]", String.format(Jobs.getGCManager().getDecimalPlacesMoney(), money));
+            message += " " + Jobs.getLanguage().getMessage("command.toggle.output.paid.money", "[amount]", CurrencyType.MONEY.format(money));
 
         double points = event.get(CurrencyType.POINTS);
         if (points != 0D)
-            message += " " + Jobs.getLanguage().getMessage("command.toggle.output.paid.points", "[points]", String.format(Jobs.getGCManager().getDecimalPlacesPoints(), points));
+            message += " " + Jobs.getLanguage().getMessage("command.toggle.output.paid.points", "[points]", CurrencyType.POINTS.format(points));
 
         double exp = event.get(CurrencyType.EXP);
         if (exp != 0D)
-            message += " " + Jobs.getLanguage().getMessage("command.toggle.output.paid.exp", "[exp]", String.format(Jobs.getGCManager().getDecimalPlacesExp(), exp));
+            message += " " + Jobs.getLanguage().getMessage("command.toggle.output.paid.exp", "[exp]", CurrencyType.EXP.format(exp));
 
         return message;
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJobsInstancePaymentBossEvent(JobsInstancePaymentEvent event) {
+
+        if (!Jobs.getGCManager().BossBarEnabled)
+            return;
 
         if (event.getPlayer() == null || !event.getPlayer().isOnline())
             return;
@@ -176,6 +179,9 @@ public class JobsPaymentVisualizationListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJobsPaymentEventBossBar(JobsPaymentEvent event) {
         if (event.isCancelled())
+            return;
+
+        if (!Jobs.getGCManager().BossBarEnabled)
             return;
 
         if (event.getPlayer() == null || !event.getPlayer().isOnline())
