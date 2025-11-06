@@ -2,7 +2,11 @@ package com.gamingmesh.jobs.hooks.McMMO;
 
 import java.util.HashMap;
 
+import com.gamingmesh.jobs.actions.BlockActionInfo;
+import com.gmail.nossr50.events.skills.woodcutting.TreeFellerDestroyTreeEvent;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -59,5 +63,14 @@ public class McMMO2_X_listener implements Listener {
         InfoMap.remove(event.getAbility().toString().toLowerCase());
         if (InfoMap.isEmpty())
             JobsHook.getMcMMOManager().getMap().remove(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onTreeFeller(TreeFellerDestroyTreeEvent event) {
+        Player player = event.getPlayer();
+        for (Block block : event.getBlocks()) {
+            BlockActionInfo bInfo = new BlockActionInfo(block, ActionType.BREAK);
+            Jobs.action(Jobs.getPlayerManager().getJobsPlayer(player), bInfo, block);
+        }
     }
 }
