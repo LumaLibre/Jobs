@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>Jobs</groupId>
 	<artifactId>jobs</artifactId>
-	<version>5.2.6.5</version>
+	<version>5.2.6.4</version>
 	<name>Jobs</name>
 	<url>http://maven.apache.org</url>
 
@@ -23,12 +23,6 @@
 			<version>1.21.10-R0.1-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
-		<!-- Guava -->
-		<dependency>
-			<groupId>com.google.guava</groupId>
-			<artifactId>guava</artifactId>
-			<version>33.3.1-jre</version>
-		</dependency>
         <!-- Mojang Authlib -->
 		<dependency>
 			<groupId>com.mojang</groupId>
@@ -40,7 +34,7 @@
 		<dependency>
 			<groupId>com.gmail.nossr50.mcMMO</groupId>
 			<artifactId>mcMMO</artifactId>
-			<version>2.2.047-CUSTOM</version>
+			<version>2.2.004</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>*</artifactId>
@@ -179,7 +173,7 @@
 		<dependency>
 			<groupId>de.keyle</groupId>
 			<artifactId>mypet</artifactId>
-			<version>3.12</version>
+			<version>3.11-SNAPSHOT</version>
 			<scope>system</scope>
 			<!--			 Temporary solution for replacing repository -->
 			<systemPath>${basedir}/libs/mypet-3.12.jar</systemPath> 
@@ -200,10 +194,6 @@
         </dependency>
 	</dependencies>
 	<repositories>
-		<repository>
-			<id>jsinco-repo-releases</id>
-			<url>https://repo.jsinco.dev/releases</url>
-		</repository>
 		<repository>
 			<id>momirealms</id>
 			<url>https://repo.momirealms.net/releases/</url>
@@ -228,6 +218,10 @@
 			<url>https://jitpack.io</url>
 		</repository>
 		<repository>
+			<id>neetgames</id>
+			<url>https://nexus.neetgames.com/repository/maven-releases/</url>
+		</repository>
+		<repository>
 			<id>spigot-repo</id>
 			<url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
 		</repository>
@@ -241,11 +235,6 @@
 			<id>bg-repo</id>
 			<url>https://repo.bg-software.com/repository/api/</url>
 		</repository>
-		<!-- 		<repository>
-			<id>neetgames</id>
-			<url>https://nexus.neetgames.com/repository/maven-releases/</url>
-		</repository>
-		 -->
 		<!-- MyPet -->
 		<!--<repository> <id>mypet-repo</id> <url>https://repo.mypet-plugin.de/</url>
 			</repositor> -->
