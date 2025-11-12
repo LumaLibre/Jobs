@@ -2,10 +2,8 @@ package com.gamingmesh.jobs.hooks.McMMO;
 
 import java.util.HashMap;
 
-import com.gamingmesh.jobs.actions.BlockActionInfo;
+import com.gamingmesh.jobs.listeners.JobsPaymentListener;
 import com.gmail.nossr50.events.skills.woodcutting.TreeFellerDestroyTreeEvent;
-import net.Zrips.CMILib.Container.CMILocation;
-import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -22,8 +20,6 @@ import com.gamingmesh.jobs.hooks.JobsHook;
 import com.gmail.nossr50.events.skills.abilities.McMMOPlayerAbilityActivateEvent;
 import com.gmail.nossr50.events.skills.abilities.McMMOPlayerAbilityDeactivateEvent;
 import com.gmail.nossr50.events.skills.repair.McMMOPlayerRepairCheckEvent;
-
-import static com.gamingmesh.jobs.listeners.JobsPaymentListener.breakCache;
 
 public class McMMO2_X_listener implements Listener {
 
@@ -71,10 +67,9 @@ public class McMMO2_X_listener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onTreeFeller(TreeFellerDestroyTreeEvent event) {
         Player player = event.getPlayer();
+        Jobs plugin = Jobs.getInstance();
         for (Block block : event.getBlocks()) {
-            BlockActionInfo bInfo = new BlockActionInfo(block, ActionType.BREAK);
-            Jobs.action(Jobs.getPlayerManager().getJobsPlayer(player), bInfo, block);
-            breakCache.put(CMILocation.toString(block.getLocation(), ":", true, true), player.getUniqueId());
+            JobsPaymentListener.handleBlockBreak(block, player, plugin);
         }
     }
 }

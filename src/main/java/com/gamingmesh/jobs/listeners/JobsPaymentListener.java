@@ -435,7 +435,10 @@ public final class JobsPaymentListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        final Block block = event.getBlock();
+        handleBlockBreak(event.getBlock(), event.getPlayer(), plugin);
+    }
+
+    public static void handleBlockBreak(final Block block, Player player, Jobs plugin) {
 
         if (!Jobs.getGCManager().canPerformActionInWorld(block.getWorld()))
             return;
@@ -444,8 +447,6 @@ public final class JobsPaymentListener implements Listener {
         if (JobsHook.BlockTracker.isEnabled() && Jobs.getGCManager().useBlockProtectionBlockTracker && JobsHook.getBlockTrackerManager().isTracked(block)) {
             return;
         }
-
-        Player player = event.getPlayer();
 
         // Remove block owner ships
         plugin.removeBlockOwnerShip(block);
@@ -466,7 +467,7 @@ public final class JobsPaymentListener implements Listener {
         FastPayment fp = Jobs.FASTPAYMENT.get(player.getUniqueId());
         if (fp != null) {
             if (fp.getTime() > System.currentTimeMillis() && (fp.getInfo().getName().equalsIgnoreCase(bInfo.getName()) ||
-                fp.getInfo().getNameWithSub().equalsIgnoreCase(bInfo.getNameWithSub()))) {
+                    fp.getInfo().getNameWithSub().equalsIgnoreCase(bInfo.getNameWithSub()))) {
                 Jobs.perform(fp.getPlayer(), fp.getInfo(), fp.getPayment(), fp.getJob(), block, null, null);
                 return;
             }
