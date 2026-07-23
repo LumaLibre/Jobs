@@ -1,17 +1,17 @@
 /**
  * Jobs Plugin for Bukkit
  * Copyright (C) 2011 Zak Ford <zak.j.ford@gmail.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -100,6 +100,7 @@ import com.gamingmesh.jobs.actions.ItemActionInfo;
 import com.gamingmesh.jobs.actions.ItemNameActionInfo;
 import com.gamingmesh.jobs.actions.PotionItemActionInfo;
 import com.gamingmesh.jobs.api.JobsChunkChangeEvent;
+import com.gamingmesh.jobs.config.JLC;
 import com.gamingmesh.jobs.container.ActionType;
 import com.gamingmesh.jobs.container.ExploreRespond;
 import com.gamingmesh.jobs.container.FastPayment;
@@ -162,13 +163,13 @@ public final class JobsPaymentListener implements Listener {
     public void villagerTradeInventoryClick(InventoryClickEvent event) {
         // If event is nothing or place, do nothing
         switch (event.getAction()) {
-        case NOTHING:
-        case PLACE_ONE:
-        case PLACE_ALL:
-        case PLACE_SOME:
-            return;
-        default:
-            break;
+            case NOTHING:
+            case PLACE_ONE:
+            case PLACE_ALL:
+            case PLACE_SOME:
+                return;
+            default:
+                break;
         }
 
         if (event.getInventory().getType() != InventoryType.MERCHANT || event.getSlot() != 2 || event.getSlotType() != SlotType.RESULT)
@@ -185,7 +186,7 @@ public final class JobsPaymentListener implements Listener {
             return;
 
         Player player = (Player) event.getWhoClicked();
-        //Check if inventory is full and using shift click, possible money dupping fix
+        // Check if inventory is full and using shift click, possible money dupping fix
         if (player.getInventory().firstEmpty() == -1 && event.isShiftClick()) {
             player.sendMessage(Jobs.getLanguage().getMessage("message.crafting.fullinventory"));
             return;
@@ -355,6 +356,10 @@ public final class JobsPaymentListener implements Listener {
                 for (int i = 0; i < JobsHook.getWildStackerManager().getEntityAmount((LivingEntity) entity) - 1; i++) {
                     Jobs.action(jDamager, new CustomKillInfo(typeString, ActionType.SHEAR));
                 }
+            } else if (JobsHook.RoseStacker.isEnabled()) {
+                for (int i = 0; i < JobsHook.getRoseStackerManager().getEntityAmount((LivingEntity) entity) - 1; i++) {
+                    Jobs.action(jDamager, new CustomKillInfo(typeString, ActionType.SHEAR));
+                }
             } else if (JobsHook.StackMob.isEnabled() && JobsHook.getStackMobManager().isStacked((LivingEntity) entity)) {
                 StackEntity stack = JobsHook.getStackMobManager().getStackEntity((LivingEntity) entity);
                 if (stack != null) {
@@ -467,7 +472,7 @@ public final class JobsPaymentListener implements Listener {
         FastPayment fp = Jobs.FASTPAYMENT.get(player.getUniqueId());
         if (fp != null) {
             if (fp.getTime() > System.currentTimeMillis() && (fp.getInfo().getName().equalsIgnoreCase(bInfo.getName()) ||
-                    fp.getInfo().getNameWithSub().equalsIgnoreCase(bInfo.getNameWithSub()))) {
+                fp.getInfo().getNameWithSub().equalsIgnoreCase(bInfo.getNameWithSub()))) {
                 Jobs.perform(fp.getPlayer(), fp.getInfo(), fp.getPayment(), fp.getJob(), block, null, null);
                 return;
             }
@@ -581,6 +586,10 @@ public final class JobsPaymentListener implements Listener {
                 for (int i = 0; i < JobsHook.getWildStackerManager().getEntityAmount(animal) - 1; i++) {
                     Jobs.action(jDamager, new EntityActionInfo(animal, ActionType.TAME));
                 }
+            } else if (JobsHook.RoseStacker.isEnabled()) {
+                for (int i = 0; i < JobsHook.getRoseStackerManager().getEntityAmount(animal) - 1; i++) {
+                    Jobs.action(jDamager, new EntityActionInfo(animal, ActionType.TAME));
+                }
             } else if (JobsHook.StackMob.isEnabled() && JobsHook.getStackMobManager().isStacked(animal)) {
 
                 StackEntity stack = JobsHook.getStackMobManager().getStackEntity(animal);
@@ -598,13 +607,13 @@ public final class JobsPaymentListener implements Listener {
     public void onInventoryCraft(CraftItemEvent event) {
         // If event is nothing or place, do nothing
         switch (event.getAction()) {
-        case NOTHING:
-        case PLACE_ONE:
-        case PLACE_ALL:
-        case PLACE_SOME:
-            return;
-        default:
-            break;
+            case NOTHING:
+            case PLACE_ONE:
+            case PLACE_ALL:
+            case PLACE_SOME:
+                return;
+            default:
+                break;
         }
 
         if (event.getSlotType() != SlotType.RESULT)
@@ -623,7 +632,7 @@ public final class JobsPaymentListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
-        //Check if inventory is full and using shift click, possible money dupping fix
+        // Check if inventory is full and using shift click, possible money dupping fix
         if (player.getInventory().firstEmpty() == -1 && event.isShiftClick()) {
             player.sendMessage(Jobs.getLanguage().getMessage("message.crafting.fullinventory"));
             return;
@@ -853,15 +862,15 @@ public final class JobsPaymentListener implements Listener {
     public void onInventoryRepair(InventoryClickEvent event) {
         // If event is nothing or place, do nothing
         switch (event.getAction()) {
-        case NOTHING:
-        case PLACE_ONE:
-        case PLACE_ALL:
-        case PLACE_SOME:
-        case DROP_ONE_SLOT:
-        case DROP_ALL_SLOT:
-            return;
-        default:
-            break;
+            case NOTHING:
+            case PLACE_ONE:
+            case PLACE_ALL:
+            case PLACE_SOME:
+            case DROP_ONE_SLOT:
+            case DROP_ALL_SLOT:
+                return;
+            default:
+                break;
         }
 
         if (!event.getAction().equals(InventoryAction.MOVE_TO_OTHER_INVENTORY) &&
@@ -882,7 +891,7 @@ public final class JobsPaymentListener implements Listener {
         // must be an inventory
         if (!(inv instanceof AnvilInventory) && (Version.isCurrentEqualOrHigher(Version.v1_14_R1)
             && !(inv instanceof GrindstoneInventory) && !(inv instanceof StonecutterInventory))
-        // Smithing inventory class is added in 1.16
+            // Smithing inventory class is added in 1.16
             && (Version.isCurrentEqualOrHigher(Version.v1_16_R1) && !(inv instanceof SmithingInventory)))
             return;
 
@@ -900,7 +909,7 @@ public final class JobsPaymentListener implements Listener {
             || (Version.isCurrentEqualOrHigher(Version.v1_16_R1) && !(inv instanceof SmithingInventory))) && slot == 1)
             return;
 
-        //Check if inventory is full and using shift click, possible money dupping fix
+        // Check if inventory is full and using shift click, possible money dupping fix
         if (player.getInventory().firstEmpty() == -1 && event.isShiftClick()) {
             player.sendMessage(Jobs.getLanguage().getMessage("message.crafting.fullinventory"));
             return;
@@ -912,13 +921,13 @@ public final class JobsPaymentListener implements Listener {
 
         // Fix for possible money duplication bugs.
         switch (event.getClick()) {
-        case UNKNOWN:
-        case WINDOW_BORDER_LEFT:
-        case WINDOW_BORDER_RIGHT:
-        case NUMBER_KEY:
-            return;
-        default:
-            break;
+            case UNKNOWN:
+            case WINDOW_BORDER_LEFT:
+            case WINDOW_BORDER_RIGHT:
+            case NUMBER_KEY:
+                return;
+            default:
+                break;
         }
 
         // Check for world permissions
@@ -1069,19 +1078,19 @@ public final class JobsPaymentListener implements Listener {
         Block block = null;
 
         switch (event.getDestination().getType().toString().toLowerCase()) {
-        case "furnace":
-            block = ((Furnace) event.getDestination().getHolder()).getBlock();
-            break;
-        case "smoker":
-            // This should be done in this way to have backwards compatibility
-            block = ((org.bukkit.block.Smoker) event.getDestination().getHolder()).getBlock();
-            break;
-        case "blast_furnace":
-            // This should be done in this way to have backwards compatibility
-            block = ((org.bukkit.block.BlastFurnace) event.getDestination().getHolder()).getBlock();
-            break;
-        default:
-            return;
+            case "furnace":
+                block = ((Furnace) event.getDestination().getHolder()).getBlock();
+                break;
+            case "smoker":
+                // This should be done in this way to have backwards compatibility
+                block = ((org.bukkit.block.Smoker) event.getDestination().getHolder()).getBlock();
+                break;
+            case "blast_furnace":
+                // This should be done in this way to have backwards compatibility
+                block = ((org.bukkit.block.BlastFurnace) event.getDestination().getHolder()).getBlock();
+                break;
+            default:
+                return;
         }
 
         if (block == null || !Jobs.getGCManager().canPerformActionInWorld(block.getWorld()))
@@ -1125,7 +1134,7 @@ public final class JobsPaymentListener implements Listener {
             if (jPlayer.hasBlockOwnerShipInform(lc))
                 return;
 
-            CMIMessages.sendMessage(player, Jobs.getLanguage().getMessage("general.error.blockDisabled",
+            CMIMessages.sendMessage(player, JLC.general_error_blockDisabled.getMessage(
                 "[type]", Jobs.getNameTranslatorManager().translate(CMIMaterial.get(block)),
                 "[location]", LC.Location_Full.getLocale(block.getLocation())));
             jPlayer.addBlockOwnerShipInform(lc);
@@ -1205,7 +1214,7 @@ public final class JobsPaymentListener implements Listener {
         if (!Jobs.getGCManager().MonsterDamageUse)
             return;
 
-        //Gross but works
+        // Gross but works
         entityLastDamager.put(ent.getUniqueId(), (Player) ((EntityDamageByEntityEvent) event).getDamager());
 
         double damage = event.getFinalDamage();
@@ -1283,13 +1292,13 @@ public final class JobsPaymentListener implements Listener {
         if (Jobs.getGCManager().MonsterDamageUse) {
             boolean ignore = false;
             if (Jobs.getGCManager().MonsterDamageIgnoreBosses) {
-                CMIEntityType etype = CMIEntityType.getByType(lVictim.getType());
+                CMIEntityType etype = CMIEntityType.get(lVictim.getType());
                 switch (etype) {
-                case ENDER_DRAGON:
-                case WITHER:
-                case WARDEN:
-                    ignore = true;
-                    break;
+                    case ENDER_DRAGON:
+                    case WITHER:
+                    case WARDEN:
+                        ignore = true;
+                        break;
                 }
             }
 
@@ -1308,14 +1317,15 @@ public final class JobsPaymentListener implements Listener {
             }
         }
 
-        //extra check for Citizens 2 sentry kills
+        // extra check for Citizens 2 sentry kills
         if (killer.hasMetadata("NPC"))
             return;
 
-        if (Jobs.getGCManager().MythicMobsEnabled && JobsHook.getMythicMobsManager() != null
-            && JobsHook.getMythicMobsManager().isMythicMob(lVictim)) {
-            return;
-        }
+        // If MythicMobs handles this mob (custom mob or vanilla override), skip KILL to avoid
+        // double payment with MMKill. ForceKill is still dispatched further below, which allows
+        // server admins to reward kills on vanilla-override mobs by their vanilla entity type.
+        boolean isMythicMobEntity = Jobs.getGCManager().MythicMobsEnabled && JobsHook.getMythicMobsManager() != null
+            && JobsHook.getMythicMobsManager().isMythicMob(lVictim);
 
         Player pDamager = null;
 
@@ -1375,21 +1385,30 @@ public final class JobsPaymentListener implements Listener {
         if (notNpc && jDamager.getName().equalsIgnoreCase(((Player) lVictim).getName()))
             return;
 
-        if (Jobs.getGCManager().payForStackedEntities) {
-            if (JobsHook.WildStacker.isEnabled()) {
-                for (int i = 0; i < JobsHook.getWildStackerManager().getEntityAmount(lVictim) - 1; i++) {
-                    Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.KILL), killer, lVictim);
-                }
-            } else if (JobsHook.StackMob.isEnabled() && JobsHook.getStackMobManager().isStacked(lVictim)) {
-                StackEntity stack = JobsHook.getStackMobManager().getStackEntity(lVictim);
-                if (stack != null) {
-                    Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.KILL), killer, lVictim);
-                    return;
+        if (!isMythicMobEntity) {
+            if (Jobs.getGCManager().payForStackedEntities) {
+                if (JobsHook.WildStacker.isEnabled()) {
+                    for (int i = 0; i < JobsHook.getWildStackerManager().getEntityAmount(lVictim) - 1; i++) {
+                        Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.KILL), killer, lVictim);
+                        Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.FORCEKILL), killer, lVictim);
+                    }
+                } else if (JobsHook.StackMob.isEnabled() && JobsHook.getStackMobManager().isStacked(lVictim)) {
+                    StackEntity stack = JobsHook.getStackMobManager().getStackEntity(lVictim);
+                    if (stack != null) {
+                        Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.KILL), killer, lVictim);
+                        Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.FORCEKILL), killer, lVictim);
+                        return;
+                    }
                 }
             }
+
+            Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.KILL), killer, lVictim);
         }
 
-        Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.KILL), killer, lVictim);
+        // ForceKill always fires regardless of MythicMobs status, using the vanilla entity type name.
+        // This allows rewarding kills on MythicMobs vanilla-override mobs (e.g. a Zombie with custom
+        // loot) by configuring them under ForceKill: instead of Kill: or MMKill:.
+        Jobs.action(jDamager, new EntityActionInfo(lVictim, ActionType.FORCEKILL), killer, lVictim);
 
         // Payment for killing player with particular job, except NPC's
         if (notNpc) {
@@ -1517,7 +1536,7 @@ public final class JobsPaymentListener implements Listener {
 
         EntityDamageByEntityEvent e = (EntityDamageByEntityEvent) ent.getLastDamageCause();
 
-        //extra check for Citizens 2 sentry kills
+        // extra check for Citizens 2 sentry kills
         if (!(e.getDamager() instanceof Player))
             return;
 
@@ -1570,29 +1589,14 @@ public final class JobsPaymentListener implements Listener {
         if (!Jobs.getGCManager().useBreederFinder || !Jobs.getGCManager().canPerformActionInWorld(event.getEntity().getWorld()))
             return;
 
-        if (!event.getSpawnReason().toString().equalsIgnoreCase("BREEDING") && !event.getSpawnReason().toString().equalsIgnoreCase("EGG"))
+        if (!event.getSpawnReason().toString().equalsIgnoreCase("EGG"))
             return;
 
         LivingEntity animal = event.getEntity();
 
         Player player = Util.getClosestPlayer(animal.getLocation());
 
-        if (player == null)
-            return;
-
-        // check if in creative
-        if (!payIfCreative(player))
-            return;
-
-        if (!Jobs.getPermissionHandler().hasWorldPermission(player, player.getLocation().getWorld().getName()))
-            return;
-
-        // check if player is riding
-        if (Jobs.getGCManager().disablePaymentIfRiding && player.isInsideVehicle())
-            return;
-
-        // pay
-        Jobs.action(Jobs.getPlayerManager().getJobsPlayer(player), new EntityActionInfo(animal, ActionType.BREED));
+        JobsPayment1_14Listener.processBreeding(animal, player);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -1797,15 +1801,15 @@ public final class JobsPaymentListener implements Listener {
                     report = true;
 
                 if (report)
-                    CMIActionBar.send(p, Jobs.getLanguage().getMessage("general.error.noRegistration", "[block]", name));
+                    CMIActionBar.send(p, JLC.general_error_noRegistration.getMessage("[block]", name));
             } else if (done == ownershipFeedback.newReg && jPlayer != null && jPlayer.getMaxOwnerShipAllowed(blockOwner.getType()) > 0) {
 
-                CMIActionBar.send(p, Jobs.getLanguage().getMessage("general.error.newRegistration", "[block]", name,
+                CMIActionBar.send(p, JLC.general_error_newRegistration.getMessage("[block]", name,
                     "[current]", blockOwner.getTotal(jPlayer.getUniqueId()),
                     "[max]", jPlayer.getMaxOwnerShipAllowed(blockOwner.getType()) == 0 ? "-" : jPlayer.getMaxOwnerShipAllowed(blockOwner.getType())));
 
             } else if (done == ownershipFeedback.reenabled && jPlayer != null) {
-                CMIActionBar.send(p, Jobs.getLanguage().getMessage("general.error.reenabledBlock"));
+                CMIActionBar.send(p, JLC.general_error_reenabledBlock.getMessage());
             }
 
             BlockOwnerShip.saveDelay();
@@ -1881,12 +1885,7 @@ public final class JobsPaymentListener implements Listener {
         if (jPlayer == null)
             return;
 
-        ExploreRespond respond = null;
-
-        if (Jobs.getGCManager().useNewExploration)
-            respond = Jobs.getChunkExplorationManager().chunkRespond(jPlayer.getUserId(), event.getNewChunk());
-        else
-            respond = Jobs.getExploreManager().chunkRespond(jPlayer.getUserId(), event.getNewChunk());
+        ExploreRespond respond = ExploreRespond.get(jPlayer, event.getNewChunk());
 
         if (!respond.isNewChunk())
             return;

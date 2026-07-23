@@ -1,17 +1,17 @@
 /**
  * Jobs Plugin for Bukkit
  * Copyright (C) 2011 Zak Ford <zak.j.ford@gmail.com>
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -35,6 +35,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import com.gamingmesh.jobs.Jobs;
+import com.gamingmesh.jobs.container.ActionType;
 import com.gamingmesh.jobs.container.CurrencyLimit;
 import com.gamingmesh.jobs.container.CurrencyType;
 import com.gamingmesh.jobs.container.MessageToggleState;
@@ -79,6 +80,8 @@ public class GeneralConfigManager {
     private String getSelectionTool, DecimalPlacesMoney, DecimalPlacesExp, DecimalPlacesPoints;
 
     public List<String> JobsTopHiddenPlayers;
+
+    public boolean jobsTopIncludesArchivedStats;
 
     public int jobExpiryTime, BlockProtectionDays, FireworkPower, ShootTime, blockOwnershipRange,
         globalblocktimer, globalBlockBreakTimer, CowMilkingTimer, InfoUpdateInterval, JobsTopAmount, PlaceholdersPage, ConfirmExpiryTime,
@@ -324,7 +327,7 @@ public class GeneralConfigManager {
 
     /**
      * Method to load the general configuration
-     * 
+     *
      * loads from Jobs/generalConfig.yml
      */
     private void loadGeneralSettings() {
@@ -573,7 +576,7 @@ public class GeneralConfigManager {
         c.addComment("pay-for-above", "When enabled we will try to pay player for blocks above broken ones. This only applies to sugarcane, bamboo, kelp and weeping_vines");
         payForAbove = c.get("pay-for-above", false);
 
-        c.addComment("pay-for-stacked-entities", "Allows to pay for stacked entities for each one. Requires StackMob or WildStacker.");
+        c.addComment("pay-for-stacked-entities", "Allows to pay for stacked entities for each one. Requires StackMob, WildStacker or RoseStacker.");
         payForStackedEntities = c.get("pay-for-stacked-entities", false);
 
         c.addComment("allow-pay-for-durability-loss", "Allows, when losing maximum durability of item then it does not pay the player until it is repaired.",
@@ -925,9 +928,11 @@ public class GeneralConfigManager {
             "Should we use BlockTracker plugin instead of built in block tracker");
         useBlockProtectionBlockTracker = c.get("ExploitProtections.General.PlaceAndBreak.BlockTracker.Enabled", false);
 
-        c.addComment("ExploitProtections.General.PlaceAndBreak.IgnoreOreGenerators",
-            "Enabling this we will ignore blocks generated in ore generators, liko stone, coublestone and obsidian. You can still use timer on player placed obsidian block");
-        ignoreOreGenerators = c.get("ExploitProtections.General.PlaceAndBreak.IgnoreOreGenerators", true);
+        c.addComment("ExploitProtections.General.PlaceAndBreak.ProtectionOfOreGenerators",
+            "When enabled blocks will keep protection after next generator cycle preventing quick money making aproach",
+            "Keep in mind that timers are based on block protection setup");
+        ignoreOreGenerators = c.get("ExploitProtections.General.PlaceAndBreak.ProtectionOfOreGenerators",
+            c.getC().getBoolean("ExploitProtections.General.PlaceAndBreak.IgnoreOreGenerators", true));
 
         c.addComment("ExploitProtections.General.PlaceAndBreak.KeepDataFor",
             "Only applies when old method is used",
@@ -1155,6 +1160,25 @@ public class GeneralConfigManager {
 
         c.addComment("JobsGUI.OpenOnBrowse", "Do you want to show GUI when performing /jobs browse command?");
         JobsGUIOpenOnBrowse = c.get("JobsGUI.OpenOnBrowse", true);
+
+        c.addComment("JobsGUI.BrowseItems", "Items to represent actions in jobs", "Multiple items can be defined and they will be picked in order");
+        for (ActionType one : ActionType.values()) {
+            List<String> ls = new ArrayList<>();
+            for (ItemStack oneI : one.getGuiItems()) {
+                ls.add(CMIItemStack.serialize(oneI));
+            }
+
+            List<String> items = c.get("JobsGUI.BrowseItems." + one.toString(), ls);
+            List<ItemStack> guiItems = new ArrayList<>();
+            for (String oneI : items) {
+                CMIItemStack ci = CMIItemStack.deserialize(oneI);
+                if (ci != null && ci.getItemStack() != null)
+                    guiItems.add(ci.getItemStack());
+            }
+
+            one.setGuiItems(guiItems);
+        }
+
         c.addComment("JobsGUI.ShowChatBrowse", "Do you want to show chat information when performing /jobs browse command?");
         JobsGUIShowChatBrowse = c.get("JobsGUI.ShowChatBrowse", true);
         c.addComment("JobsGUI.SwitcheButtons", "With true left mouse button will join job and right will show more info.",
@@ -1221,6 +1245,9 @@ public class GeneralConfigManager {
         c.addComment("Commands.PageRow.JobsTop.HiddenPlayers", "List of player names who should be excluded from /jobs top & /jobs gtop");
         JobsTopHiddenPlayers = c.get("Commands.PageRow.JobsTop.HiddenPlayers", Arrays.asList("Zrips"));
         CMIList.toLowerCase(JobsTopHiddenPlayers);
+
+        c.addComment("Commands.PageRow.JobsTop.IncludeArchivedStats", "Whether to include archived level/experience in /jobs top & /jobs gtop");
+        jobsTopIncludesArchivedStats = c.get("Commands.PageRow.JobsTop.IncludeArchivedStats", false);
 
         c.addComment("Commands.PageRow.Placeholders.AmountToShow", "Defines amount of placeholders to be shown in one page for /jobs placeholders");
         PlaceholdersPage = c.get("Commands.PageRow.Placeholders.AmountToShow", 10);
