@@ -1,12 +1,7 @@
 package com.gamingmesh.jobs.hooks;
 
-import com.gamingmesh.jobs.hooks.Logically.TreeChopListener;
-import com.gamingmesh.jobs.listeners.JobsEvenMoreFishPaymentListener;
-import org.bukkit.Bukkit;
-import org.bukkit.plugin.PluginManager;
-import org.bukkit.plugin.java.JavaPlugin;
-
 import com.gamingmesh.jobs.Jobs;
+import com.gamingmesh.jobs.hooks.Logically.TreeChopListener;
 import com.gamingmesh.jobs.hooks.McMMO.McMMO1_X_listener;
 import com.gamingmesh.jobs.hooks.McMMO.McMMO2_X_listener;
 import com.gamingmesh.jobs.hooks.McMMO.McMMOManager;
@@ -19,10 +14,16 @@ import com.gamingmesh.jobs.hooks.pyroFishingPro.PyroFishingProListener;
 import com.gamingmesh.jobs.hooks.roseStacker.RoseStackerHandler;
 import com.gamingmesh.jobs.hooks.roseStacker.RoseStackerListener;
 import com.gamingmesh.jobs.hooks.stackMob.StackMobManager;
+import com.gamingmesh.jobs.hooks.tbp.TbpListener;
 import com.gamingmesh.jobs.hooks.wildStacker.WildStackerHandler;
 import com.gamingmesh.jobs.listeners.JobsCustomFishingPaymentListener;
-
+import com.gamingmesh.jobs.listeners.JobsEvenMoreFishPaymentListener;
+import dev.jsinco.brewery.bukkit.api.TheBrewingProjectApi;
 import net.Zrips.CMILib.Messages.CMIMessages;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredServiceProvider;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public enum JobsHook {
     MyPet {
@@ -91,7 +92,6 @@ public enum JobsHook {
         }
     },
     MythicMobs {
-
         @Override
         protected boolean init() {
             if (!isPresent())
@@ -215,6 +215,25 @@ public enum JobsHook {
 
             Jobs.getInstance().getServer().getPluginManager().registerEvents(new TreeChopListener(), Jobs.getInstance());
             printListenerMessage(this);
+        }
+    },
+    TheBrewingProject {
+        @Override
+        public void registerListener() {
+            if (!isPresent()) {
+                return;
+            }
+            try {
+                if (!Bukkit.getServicesManager().isProvidedFor(TheBrewingProjectApi.class)) {
+                    return;
+                }
+                RegisteredServiceProvider<TheBrewingProjectApi> provider = Bukkit.getServicesManager().getRegistration(TheBrewingProjectApi.class);
+                if (provider != null) {
+                    Jobs.getInstance().getServer().getPluginManager().registerEvents(new TbpListener(provider.getProvider()), Jobs.getInstance());
+                    printListenerMessage(this);
+                }
+            } catch (NoClassDefFoundError ignored) {
+            }
         }
     };
 
