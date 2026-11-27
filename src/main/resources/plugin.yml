@@ -23,7 +23,8 @@ softdepend: [
   BlockTracker,
   CustomFishing,
   EvenMoreFish,
-  Logically
+  Logically,
+  TheBrewingProject
 ]
 commands:
   jobs:
